@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Movie } from "../types";
 import { MovieCard } from "./MovieCard";
 
-export function MovieRow({ title, movies, onMovieClick }: { title: string; movies: Movie[]; onMovieClick: (m: Movie) => void }) {
+export function MovieRow({ title, movies, onMovieClick, onViewAll }: { title: string; movies: Movie[]; onMovieClick: (m: Movie) => void; onViewAll?: () => void }) {
   const rowRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: 'left' | 'right') => {
@@ -21,7 +21,11 @@ export function MovieRow({ title, movies, onMovieClick }: { title: string; movie
           <span className="w-1 h-6 bg-blue-600 rounded-full mr-3"></span>
           {title}
         </h2>
-        <a href="#" className="text-xs text-blue-500 hover:underline font-semibold cursor-pointer">View All</a>
+        {onViewAll && (
+          <button onClick={onViewAll} className="text-xs text-blue-500 hover:text-blue-400 font-semibold cursor-pointer transition-colors bg-white/5 hover:bg-white/10 px-3 py-1 rounded-full">
+            View All
+          </button>
+        )}
       </div>
       
       <div className="relative">

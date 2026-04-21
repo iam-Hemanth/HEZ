@@ -1,4 +1,4 @@
-const TMDB_KEY = "422330314793cfddb004ce51a89d7a2a";
+const TMDB_KEY = import.meta.env.VITE_TMDB_KEY || "422330314793cfddb004ce51a89d7a2a"; // Fallback provided just in case during transition
 const BASE_URL = "https://api.themoviedb.org/3";
 
 export interface TMDBMovie {
@@ -25,34 +25,84 @@ const mapMovie = (movie: any, forceMediaType?: 'movie' | 'tv'): TMDBMovie => ({
   media_type: forceMediaType || (movie.media_type === 'tv' ? 'tv' : 'movie'),
 });
 
-export const fetchTrending = async (): Promise<TMDBMovie[]> => {
-  const res = await fetch(`${BASE_URL}/trending/movie/week?api_key=${TMDB_KEY}`);
+export const fetchTrending = async (page: number = 1): Promise<TMDBMovie[]> => {
+  const res = await fetch(`${BASE_URL}/trending/movie/week?api_key=${TMDB_KEY}&page=${page}`);
   const data = await res.json();
   return data.results.map((m: any) => mapMovie(m, 'movie'));
 };
 
-export const fetchTrendingTV = async (): Promise<TMDBMovie[]> => {
-  const res = await fetch(`${BASE_URL}/trending/tv/week?api_key=${TMDB_KEY}`);
+export const fetchTrendingTV = async (page: number = 1): Promise<TMDBMovie[]> => {
+  const res = await fetch(`${BASE_URL}/trending/tv/week?api_key=${TMDB_KEY}&page=${page}`);
   const data = await res.json();
   return data.results.map((m: any) => mapMovie(m, 'tv'));
 };
 
-export const fetchTopRated = async (): Promise<TMDBMovie[]> => {
-  const res = await fetch(`${BASE_URL}/movie/top_rated?api_key=${TMDB_KEY}`);
+export const fetchTopRated = async (page: number = 1): Promise<TMDBMovie[]> => {
+  const res = await fetch(`${BASE_URL}/movie/top_rated?api_key=${TMDB_KEY}&page=${page}`);
   const data = await res.json();
   return data.results.map((m: any) => mapMovie(m, 'movie'));
 };
 
-export const fetchTopRatedTV = async (): Promise<TMDBMovie[]> => {
-  const res = await fetch(`${BASE_URL}/tv/top_rated?api_key=${TMDB_KEY}`);
+export const fetchTopRatedTV = async (page: number = 1): Promise<TMDBMovie[]> => {
+  const res = await fetch(`${BASE_URL}/tv/top_rated?api_key=${TMDB_KEY}&page=${page}`);
   const data = await res.json();
   return data.results.map((m: any) => mapMovie(m, 'tv'));
 };
 
-export const fetchUpcoming = async (): Promise<TMDBMovie[]> => {
-  const res = await fetch(`${BASE_URL}/movie/upcoming?api_key=${TMDB_KEY}`);
+export const fetchUpcoming = async (page: number = 1): Promise<TMDBMovie[]> => {
+  const res = await fetch(`${BASE_URL}/movie/upcoming?api_key=${TMDB_KEY}&page=${page}`);
   const data = await res.json();
   return data.results.map((m: any) => mapMovie(m, 'movie'));
+};
+
+export const fetchAnime = async (): Promise<TMDBMovie[]> => {
+  const [tvRes, movieRes] = await Promise.all([
+    fetch(`${BASE_URL}/discover/tv?api_key=${TMDB_KEY}&with_genres=16&with_original_language=ja&sort_by=popularity.desc`),
+    fetch(`${BASE_URL}/discover/movie?api_key=${TMDB_KEY}&with_genres=16&with_original_language=ja&sort_by=popularity.desc`)
+  ]);
+  const tvData = await tvRes.json();
+  const movieData = await movieRes.json();
+  const tvMapped = tvData.results.map((m: any) => mapMovie(m, 'tv'));
+  const movieMapped = movieData.results.map((m: any) => mapMovie(m, 'movie'));
+  return [...tvMapped, ...movieMapped].sort((a, b) => b.vote_average - a.vote_average);
+};
+
+export const fetchLiveAction = async (): Promise<TMDBMovie[]> => {
+  const [tvRes, movieRes] = await Promise.all([
+    fetch(`${BASE_URL}/discover/tv?api_key=${TMDB_KEY}&without_genres=16&sort_by=popularity.desc`),
+    fetch(`${BASE_URL}/discover/movie?api_key=${TMDB_KEY}&without_genres=16&sort_by=popularity.desc`)
+  ]);
+  const tvData = await tvRes.json();
+  const movieData = await movieRes.json();
+  const tvMapped = tvData.results.map((m: any) => mapMovie(m, 'tv'));
+  const movieMapped = movieData.results.map((m: any) => mapMovie(m, 'movie'));
+  return [...tvMapped, ...movieMapped].sort((a, b) => Math.random() - 0.5); // Mix them up a bit
+};
+
+export const fetchRecent = async (): Promise<TMDBMovie[]> => {
+  const [tvRes, movieRes] = await Promise.all([
+    fetch(`${BASE_URL}/tv/on_the_air?api_key=${TMDB_KEY}`),
+    fetch(`${BASE_URL}/movie/now_playing?api_key=${TMDB_KEY}`)
+  ]);
+  const tvData = await tvRes.json();
+  const movieData = await movieRes.json();
+  const tvMapped = tvData.results.map((m: any) => mapMovie(m, 'tv'));
+  const movieMapped = movieData.results.map((m: any) => mapMovie(m, 'movie'));
+  return [...movieMapped, ...tvMapped]; // Keep movies then TV
+};
+
+export const fetchDiscovery = async (): Promise<TMDBMovie[]> => {
+  // Discovery gives high-quality random pages of movies/tv
+  const page = Math.floor(Math.random() * 5) + 1;
+  const [tvRes, movieRes] = await Promise.all([
+    fetch(`${BASE_URL}/discover/tv?api_key=${TMDB_KEY}&sort_by=popularity.desc&page=${page}`),
+    fetch(`${BASE_URL}/discover/movie?api_key=${TMDB_KEY}&sort_by=popularity.desc&page=${page}`)
+  ]);
+  const tvData = await tvRes.json();
+  const movieData = await movieRes.json();
+  const tvMapped = tvData.results.map((m: any) => mapMovie(m, 'tv'));
+  const movieMapped = movieData.results.map((m: any) => mapMovie(m, 'movie'));
+  return [...tvMapped, ...movieMapped].sort(() => Math.random() - 0.5);
 };
 
 export const searchMedia = async (query: string): Promise<TMDBMovie[]> => {
@@ -78,6 +128,28 @@ export const fetchTVDetails = async (tvId: number) => {
   try {
     const res = await fetch(`${BASE_URL}/tv/${tvId}?api_key=${TMDB_KEY}`);
     return await res.json();
+  } catch (e) {
+    return null;
+  }
+};
+
+export const fetchMediaMetadata = async (id: number, type: 'movie' | 'tv') => {
+  try {
+    const [creditsRes, similarRes, videosRes] = await Promise.all([
+      fetch(`${BASE_URL}/${type}/${id}/credits?api_key=${TMDB_KEY}`),
+      fetch(`${BASE_URL}/${type}/${id}/similar?api_key=${TMDB_KEY}`),
+      fetch(`${BASE_URL}/${type}/${id}/videos?api_key=${TMDB_KEY}`)
+    ]);
+    const credits = await creditsRes.json();
+    const similar = await similarRes.json();
+    const videos = await videosRes.json();
+
+    return {
+      cast: credits.cast?.slice(0, 4) || [],
+      director: credits.crew?.find((c: any) => c.job === 'Director') || credits.crew?.find((c: any) => c.job === 'Executive Producer'),
+      similar: (similar.results || []).map((m: any) => mapMovie(m, type)).filter((m: any) => m.poster_path).slice(0, 6),
+      videos: (videos.results || []).filter((v: any) => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'))
+    };
   } catch (e) {
     return null;
   }

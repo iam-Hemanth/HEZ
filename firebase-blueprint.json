@@ -1,0 +1,29 @@
+{
+  "entities": {
+    "Bookmark": {
+      "title": "Bookmark",
+      "description": "A saved movie or TV show.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "number" },
+        "title": { "type": "string" },
+        "overview": { "type": "string" },
+        "backdrop_path": { "type": "string" },
+        "poster_path": { "type": "string" },
+        "release_date": { "type": "string" },
+        "vote_average": { "type": "number" },
+        "genre_ids": { "type": "array", "items": { "type": "number" } },
+        "media_type": { "type": "string", "enum": ["movie", "tv"] },
+        "ownerId": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "title", "ownerId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/bookmarks/{bookmarkId}": {
+      "schema": { "$ref": "#/entities/Bookmark" },
+      "description": "User's bookmarked media titles."
+    }
+  }
+}

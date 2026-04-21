@@ -1,6 +1,6 @@
 import { Search, Bell, User } from "lucide-react";
 
-export function Navbar({ onSearch }: { onSearch: (q: string) => void }) {
+export function Navbar({ onSearch, searchQuery }: { onSearch: (q: string) => void; searchQuery: string }) {
   return (
     <nav className="h-16 px-8 flex items-center justify-between border-b border-white/5 bg-[#050505] sticky top-0 z-50">
       <div className="flex-1 md:ml-64 hidden md:block"></div> {/* Spacer for sidebar if needed, or mobile menu toggle */}
@@ -12,6 +12,7 @@ export function Navbar({ onSearch }: { onSearch: (q: string) => void }) {
           </div>
           <input
             type="text"
+            value={searchQuery}
             className="block w-full pl-10 pr-3 py-1.5 border border-white/10 rounded-full leading-5 bg-white/5 text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition-all"
             placeholder="Search movies..."
             onChange={(e) => onSearch(e.target.value)}
