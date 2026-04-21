@@ -27,7 +27,7 @@ service cloud.firestore {
         && data.id is number
         && data.title is string && data.title.size() <= 200
         && data.ownerId == request.auth.uid
-        && data.createdAt == request.time
+        && data.createdAt is timestamp
         && (data.get('overview', '') is string && data.get('overview', '').size() <= 5000)
         && (data.get('backdrop_path', '') is string && data.get('backdrop_path', '').size() <= 500)
         && (data.get('poster_path', '') is string && data.get('poster_path', '').size() <= 500)
